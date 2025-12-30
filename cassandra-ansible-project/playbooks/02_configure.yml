@@ -1,0 +1,32 @@
+---
+- name: 02 - Configure Cassandra Cluster (using original script for safety)
+  hosts: cassandra_nodes
+  become: yes
+
+  vars:
+    # change the seed_list variable as per your cluster design
+    seed_list: "192.168.100.10,192.168.100.20,192.168.100.30" 
+
+  tasks:
+    - name: Ensure cassandra_scripts directory exists
+      file:
+        path: /cassandra_scripts
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copy original configure script
+      copy:
+        src: ../scripts/configure_cassandra.sh
+        dest: /cassandra_scripts/configure_cassandra.sh
+        mode: '0755'
+
+    - name: Run configure script with dynamic IP and seeds (exact as original)
+      command: /cassandra_scripts/configure_cassandra.sh {{ ansible_host }} "{{ seed_list }}"
+      register: config_result
+      ignore_errors: yes
+
+    - name: Debug output from script
+      debug:
+        var: config_result.stdout_lines

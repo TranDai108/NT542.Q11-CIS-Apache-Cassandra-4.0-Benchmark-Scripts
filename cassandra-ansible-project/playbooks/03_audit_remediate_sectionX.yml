@@ -1,0 +1,32 @@
+---
+- name: Audit and Remediate All Sections
+  hosts: cassandra_nodes
+  become: yes
+  vars_prompt:
+    - name: "remediate_choice"
+      prompt: "Do you want to remediate? (yes/no)"
+      private: no
+      default: "no"
+
+  vars:
+    remediate_flag: "{{ '--remediate' if remediate_choice | lower == 'yes' else '' }}"
+
+  tasks:
+    - name: Ensure cassandra_scripts directory exists
+      file:
+        path: /cassandra_scripts
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+    #Define tasks for each section, here is an example for Section 1
+    - name: Copy and run Section X
+      copy:
+        src: ../scripts/audit_remediate_section1.sh
+        dest: /cassandra_scripts/audit_remediate_section1.sh
+        mode: '0755'
+    - name: Run Section X
+      command: /cassandra_scripts/audit_remediate_section1.sh {{ remediate_flag }}
+      register: audit1
+      ignore_errors: yes
+    - debug: var=audit1.stdout_lines
